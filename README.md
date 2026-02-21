@@ -8,7 +8,7 @@ Built by [@meimakes](https://x.com/meimakes)
 
 ## Deploy to Railway
 
-[![Deploy on Railway](https://railway.com/button.svg)](https://railway.com/new/template?template=https://github.com/meimakes/hevy-mcp-server)
+[![Deploy on Railway](https://railway.com/button.svg)](https://railway.com/new/template?template=https://github.com/meimakes/hevy-mcp-server&referralCode=a6V1Do)
 
 Click the button above to deploy your own instance to Railway. See the [Railway Deployment](#railway-deployment) section below for configuration details.
 
