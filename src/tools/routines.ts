@@ -146,6 +146,59 @@ export function getRoutineTools() {
           exercises: {
             type: 'array',
             description: 'New exercises array (replaces all existing exercises)',
+            items: {
+              type: 'object',
+              properties: {
+                exercise_template_id: {
+                  type: 'string',
+                  description: 'ID of the exercise template',
+                },
+                superset_id: {
+                  type: 'string',
+                  description: 'Optional superset ID to group exercises',
+                },
+                notes: {
+                  type: 'string',
+                  description: 'Optional notes for this exercise',
+                },
+                sets: {
+                  type: 'array',
+                  description: 'Array of planned sets',
+                  items: {
+                    type: 'object',
+                    properties: {
+                      type: {
+                        type: 'string',
+                        enum: ['normal', 'warmup', 'dropset', 'failure'],
+                        description: 'Type of set',
+                      },
+                      weight_kg: {
+                        type: 'number',
+                        description: 'Planned weight in kilograms',
+                      },
+                      reps: {
+                        type: 'number',
+                        description: 'Planned number of repetitions',
+                      },
+                      distance_meters: {
+                        type: 'number',
+                        description: 'Planned distance in meters (for cardio)',
+                      },
+                      duration_seconds: {
+                        type: 'number',
+                        description: 'Planned duration in seconds',
+                      },
+                      rpe: {
+                        type: 'number',
+                        description: 'Planned Rate of Perceived Exertion (1-10)',
+                      },
+                    },
+                    required: ['type'],
+                  },
+                },
+              },
+              required: ['exercise_template_id', 'sets'],
+            },
           },
         },
         required: ['id'],
