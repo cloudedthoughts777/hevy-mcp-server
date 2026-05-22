@@ -295,8 +295,14 @@ export function createSSETransport(
     } catch (error) {
       logger.error('Error handling POST request', { path: req.path }, error as Error);
 
-      const sanitizedMessage = sanitizeErrorMessage(error, isProduction);
+      // The transport may have already started streaming the SSE response,
+      // in which case the headers are sent and we cannot write a status/body.
+      if (res.headersSent) {
+        res.end();
+        return;
+      }
 
+      const sanitizedMessage = sanitizeErrorMessage(error, isProduction);
       res.status(500).json({
         error: 'Internal server error',
         message: sanitizedMessage,
@@ -308,8 +314,13 @@ export function createSSETransport(
   app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
     logger.error('Unhandled error', { path: req.path, method: req.method }, err);
 
-    const sanitizedMessage = sanitizeErrorMessage(err, isProduction);
+    // If the response has already started, defer to Express' default
+    // handler, which will close the connection without re-sending headers.
+    if (res.headersSent) {
+      return next(err);
+    }
 
+    const sanitizedMessage = sanitizeErrorMessage(err, isProduction);
     res.status(500).json({
       error: 'Internal server error',
       message: sanitizedMessage,
