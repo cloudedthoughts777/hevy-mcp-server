@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import { createHevyMCPServer } from './server.js';
 import { initializeStdioTransport } from './transports/stdio.js';
 import { initializeSSETransport } from './transports/sse.js';
+import { initializeHttpTransport } from './transports/http.js';
 import { ConfigurationError } from './utils/errors.js';
 
 // Load environment variables
@@ -18,7 +19,9 @@ async function main() {
     const port = parseInt(process.env.PORT || '3000', 10);
     // Use 0.0.0.0 for Railway/production, 127.0.0.1 for local development
     const host = process.env.HOST || (process.env.RAILWAY_ENVIRONMENT ? '0.0.0.0' : '127.0.0.1');
-    const ssePath = process.env.SSE_PATH || '/mcp';
+    // MCP_PATH is the modern name; SSE_PATH kept for backward compatibility.
+    const mcpPath = process.env.MCP_PATH || process.env.SSE_PATH || '/mcp';
+    const ssePath = mcpPath;
     const heartbeatInterval = parseInt(process.env.HEARTBEAT_INTERVAL || '30000', 10);
     const authToken = process.env.AUTH_TOKEN;
     const sessionTimeout = parseInt(
@@ -36,24 +39,45 @@ async function main() {
       );
     }
 
+    const validTransports = ['stdio', 'http', 'sse', 'both'];
+    if (!validTransports.includes(transport)) {
+      throw new ConfigurationError(
+        `Invalid TRANSPORT value: ${transport}. Must be one of: ${validTransports.join(', ')}.`
+      );
+    }
+
     console.error('Initializing Hevy MCP Server...');
     console.error(`Transport mode: ${transport}`);
 
-    // Create the MCP server
-    const server = createHevyMCPServer({
-      apiKey,
-      apiBaseUrl,
-    });
+    // Factory for fresh MCP Server instances. The Streamable HTTP transport
+    // needs one server per session; stdio and legacy SSE use a single instance.
+    const serverFactory = () => createHevyMCPServer({ apiKey, apiBaseUrl });
 
-    // Initialize transport(s) based on configuration
+    // Initialize transport(s) based on configuration.
     if (transport === 'stdio' || transport === 'both') {
       console.error('Starting stdio transport...');
-      await initializeStdioTransport(server);
+      await initializeStdioTransport(serverFactory());
     }
 
-    if (transport === 'sse' || transport === 'both') {
-      console.error('Starting SSE transport...');
-      await initializeSSETransport(server, {
+    // 'http' is the modern Streamable HTTP transport (MCP spec 2025-03-26) and
+    // the one required by the Claude / claude.ai connector infrastructure.
+    if (transport === 'http' || transport === 'both') {
+      console.error('Starting Streamable HTTP transport...');
+      await initializeHttpTransport(serverFactory, {
+        port,
+        host,
+        mcpPath,
+        authToken,
+        enableHttps,
+        httpsKeyPath,
+        httpsCertPath,
+      });
+    }
+
+    // 'sse' is the deprecated HTTP+SSE transport, kept for legacy clients only.
+    if (transport === 'sse') {
+      console.error('Starting legacy SSE transport (deprecated)...');
+      await initializeSSETransport(serverFactory(), {
         port,
         host,
         ssePath,
@@ -64,12 +88,6 @@ async function main() {
         httpsKeyPath,
         httpsCertPath,
       });
-    }
-
-    if (transport !== 'stdio' && transport !== 'sse' && transport !== 'both') {
-      throw new ConfigurationError(
-        `Invalid TRANSPORT value: ${transport}. Must be 'stdio', 'sse', or 'both'.`
-      );
     }
 
     console.error('Hevy MCP Server initialized successfully!');

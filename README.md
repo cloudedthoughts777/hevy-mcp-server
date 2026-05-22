@@ -1,7 +1,7 @@
 # Hevy MCP Server
 
 
-A Model Context Protocol (MCP) server that connects to the official Hevy API and exposes workout data to AI assistants. Supports dual transport modes: stdio for Claude Desktop and SSE for remote access (e.g., Poke.com).
+A Model Context Protocol (MCP) server that connects to the official Hevy API and exposes workout data to AI assistants. Supports multiple transport modes: `stdio` for local clients (Claude Desktop), and `http` — the modern Streamable HTTP transport (MCP spec 2025-03-26) — for remote access via Claude / claude.ai connectors. A legacy `sse` transport is retained for backward compatibility only.
 
 Built by [@meimakes](https://x.com/meimakes)
 
@@ -73,19 +73,24 @@ HEVY_API_KEY=your_hevy_api_key_here
 HEVY_API_BASE_URL=https://api.hevyapp.com
 
 # Transport configuration
-TRANSPORT=stdio                    # stdio | sse | both
-PORT=3004                          # Port for SSE/HTTP mode
-HOST=127.0.0.1                     # Host for SSE/HTTP mode
+TRANSPORT=http                     # http | stdio | sse | both
+PORT=3004                          # Port for http/sse mode
+HOST=127.0.0.1                     # Host for http/sse mode
 
-# SSE Configuration (for Poke.com)
-SSE_PATH=/mcp                      # SSE endpoint path
-HEARTBEAT_INTERVAL=30000           # ms - keep connection alive
+# HTTP configuration (for remote MCP connectors)
+MCP_PATH=/mcp                      # MCP endpoint path
+HEARTBEAT_INTERVAL=30000           # ms - keep-alive, legacy SSE transport only
 AUTH_TOKEN=                        # See Security section below
 ```
 
+> **Transport choice:** Use `http` for remote access — it is the Streamable HTTP
+> transport required by the Claude / claude.ai connector infrastructure. The
+> legacy `sse` transport is kept only for old clients; modern connectors POST
+> `initialize` directly and will fail against an SSE-only server.
+
 #### Security: AUTH_TOKEN Configuration
 
-**When using SSE mode with remote access (e.g., via ngrok for Poke.com), you MUST set an AUTH_TOKEN to prevent unauthorized access to your Hevy data.**
+**When exposing the server over the public internet, set an AUTH_TOKEN to prevent unauthorized access to your Hevy data.** Clients must then send `Authorization: Bearer <token>`.
 
 Generate a secure token using either method:
 
@@ -110,9 +115,9 @@ Authorization: Bearer your_generated_token_here
 ```
 
 **Security Notes:**
-- ✅ **REQUIRED** for SSE mode with public/ngrok access
+- ✅ **Recommended** for `http`/`sse` mode with public access
 - ❌ **Optional** for stdio mode (Claude Desktop)
-- ❌ **Optional** for SSE mode on localhost only
+- ❌ **Optional** for `http`/`sse` mode on localhost only
 - ⚠️  Never commit your `.env` file or share your AUTH_TOKEN
 
 ### 3. Build the Project
