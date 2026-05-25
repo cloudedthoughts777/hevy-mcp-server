@@ -6,11 +6,27 @@ A Model Context Protocol (MCP) server that connects to the official Hevy API and
 Built by [@meimakes](https://x.com/meimakes)
 
 
-## Deploy to Railway
+## Deployment
+
+This fork is **self-hosted under systemd** with **manual deploys only** — the `railway.json` / `railway.toml` files and the Railway deploy button below are leftover scaffolding from the upstream template and do **not** drive this fork's deployment. There is no auto-deploy on push.
+
+To deploy code changes to a self-hosted systemd instance:
+
+```bash
+git pull origin main
+npm install                                  # only if package.json changed
+npm run build
+sudo systemctl restart <your-service-unit>
+journalctl -u <your-service-unit> -n 30 --no-pager
+```
+
+### Deploy your own instance
+
+For anyone forking this repo and wanting a fresh hosted instance, Railway is the quickest one-click option:
 
 [![Deploy on Railway](https://railway.com/button.svg)](https://railway.com/deploy/il6CM2?referralCode=a6V1Do&utm_medium=integration&utm_source=template&utm_campaign=generic)
 
-Click the button above to deploy your own instance to Railway. See the [Railway Deployment](#railway-deployment) section below for configuration details.
+Or self-host on any Node.js-capable box (see [Installation](#installation) below).
 
 ## Features
 
