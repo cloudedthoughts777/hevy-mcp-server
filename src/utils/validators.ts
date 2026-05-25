@@ -82,9 +82,10 @@ export const CreateRoutineInputSchema = z.object({
 });
 
 // Update Routine Input Schema
+// Note: folder_id is intentionally omitted — Hevy's PUT /v1/routines/{id}
+// rejects the field entirely ("routine.folder_id" is not allowed).
 export const UpdateRoutineInputSchema = z.object({
   title: sanitizedString(200, 1).optional(),
-  folder_id: optionalString(),
   exercises: z.array(RoutineExerciseSchema).optional(),
 });
 

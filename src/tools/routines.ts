@@ -127,7 +127,7 @@ export function getRoutineTools() {
     {
       name: 'update-routine',
       description:
-        'Update an existing routine. You can update title, folder, or exercises. Only provide fields you want to change.',
+        'Update an existing routine. You can update title or exercises. Only provide fields you want to change. Note: folder_id cannot be changed via this endpoint — the Hevy API rejects it.',
       inputSchema: {
         type: 'object',
         properties: {
@@ -138,10 +138,6 @@ export function getRoutineTools() {
           title: {
             type: 'string',
             description: 'New routine title',
-          },
-          folder_id: {
-            type: 'string',
-            description: 'New folder ID',
           },
           exercises: {
             type: 'array',
